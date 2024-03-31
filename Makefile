@@ -6,7 +6,7 @@
 #    By: codespace <codespace@student.42.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/03/31 06:37:18 by codespace         #+#    #+#              #
-#    Updated: 2024/03/31 07:10:52 by codespace        ###   ########.fr        #
+#    Updated: 2024/03/31 08:57:35 by codespace        ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,7 +24,7 @@ OBJ = ${SRC:.cpp=.o}
 all : ${NAME}
 
 ${NAME}:${OBJ}
-	${CXX} ${CXXFLAGS} ${OBJ} -O ${NAME}
+	${CXX} ${CXXFLAGS} ${OBJ} -o ${NAME}
 
 clean :
 	rm -rf ${OBJ}

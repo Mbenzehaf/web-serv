@@ -3,19 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: codespace <codespace@student.42.fr>        +#+  +:+       +#+        */
+/*   By: mben-zeh <mben-zeh@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/03/31 07:11:20 by codespace         #+#    #+#             */
-/*   Updated: 2024/03/31 08:53:52 by codespace        ###   ########.fr       */
+/*   Created: 2024/03/30 20:10:40 by mben-zeh          #+#    #+#             */
+/*   Updated: 2024/04/03 11:28:38 by mben-zeh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef __WEBSERV_HPP__
 #define __WEBSERV_HPP__
-#include <iostream>
-#include <netinet/in.h> 
-#include <sys/socket.h> 
-#include <unistd.h>
- #include <string.h>
+#include "config.hpp"
+#include "color.hpp"
 
 #endif

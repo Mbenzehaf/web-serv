@@ -6,7 +6,7 @@
 /*   By: mben-zeh <mben-zeh@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/30 20:06:03 by mben-zeh          #+#    #+#             */
-/*   Updated: 2024/04/09 03:10:14 by mben-zeh         ###   ########.fr       */
+/*   Updated: 2024/04/09 20:56:30 by mben-zeh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,12 +44,8 @@ int main(int ac,char **av)
         if(ac != 2)
            throw std::runtime_error("./webserv [configuration file]");
         GlobalConfig config(av[1]);
-        std::map < std::string, serverConfig >::iterator servers;
-        
-        for(servers = config.servers.begin(); servers !=  config.servers.end() ; servers++)
-        {
-            show(servers->second.config.begin(),servers->second.config.end());
-        }
+        config.getconfig();
+       // std::map < std::string, serverConfig >::iterator servers;
        /* if((serverfd = socket(AF_INET,SOCK_STREAM,0)) == -1 )
            throw std::runtime_error("Failed to create socket.");
         serverAdress.sin_family = AF_INET;

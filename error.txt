@@ -1,0 +1,2 @@
+duplicate : root location listen(the same port and in another server) 
+port : default (80)

@@ -6,7 +6,7 @@
 /*   By: mben-zeh <mben-zeh@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/03 11:08:45 by mben-zeh          #+#    #+#             */
-/*   Updated: 2024/04/09 01:55:51 by mben-zeh         ###   ########.fr       */
+/*   Updated: 2024/04/10 07:01:57 by mben-zeh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,26 +33,32 @@
 #include <set>
 #define npos std::string::npos
 #define INVALIDCONFIG "Error: invalid configuration file"
-class locationConfig {
-    public :
-        std::map < std::string, std::vector<std::string> > config;
-        void setlocation();
-        std::map<std::string ,  std::vector<std::string> >& getlocations();
-};
 
-class serverConfig {
-    public :
-        std::map < std::string, std::vector<std::string> > config;
-        std::map < std::string, locationConfig > locations;
-        
-};
 class Keywords
 {
     protected:
     std::set<std::string> keywords,gkeywords;
     public:
     Keywords();
+}; 
+
+class locationConfig {
+    public :
+        std::map < std::string, std::vector<std::string> > config;
+        void setlocation(const std::vector<std::string> &);
+        std::map<std::string ,  std::vector<std::string> >& getlocations();
+        void getconfig();
 };
+
+class serverConfig {
+    public :
+        std::map < std::string, std::vector<std::string> > config;
+        std::map < std::string, locationConfig > locations;
+        //void getconfig();
+        void setconfig(const std::vector<std::string> &arr);
+        void getconfig();
+};
+
 class GlobalConfig:protected Keywords{
     private :
         std::map <std::string,  std::vector<std::string> > config;
@@ -63,7 +69,11 @@ class GlobalConfig:protected Keywords{
     protected :
         bool checkkeywords(const std::vector<std::string>& );
     public :
+        void getconfig();
         std::map < std::string, serverConfig > servers;
+        void setconfig(const std::vector<std::string> &);
+        void setServers(const std::vector<std::string>&);
         GlobalConfig(const char *);
 };
+
 #endif

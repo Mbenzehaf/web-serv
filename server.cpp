@@ -33,11 +33,11 @@ void show(std::map < std::string, std::vector<std::string> >::iterator first,std
 int main(int ac,char **av)
 {
     int serverfd;
-    int epollFd;
+    //int epollFd;
     //sockaddr_in serverAdress;
     
     serverfd = -1;
-    epollFd = -1;
+    //epollFd = -1;
     //(void)av;
     try
     {
@@ -45,6 +45,11 @@ int main(int ac,char **av)
            throw std::runtime_error("./webserv [configuration file]");
         GlobalConfig config(av[1]);
         config.getconfig();
+        // std::map < std::string, serverConfig >::iterator it;
+        // for(it = config.servers.begin();it != config.servers.end();it++ )
+        // {
+        //     std::cout << it->first << std::endl;
+        // }
        // std::map < std::string, serverConfig >::iterator servers;
        /* if((serverfd = socket(AF_INET,SOCK_STREAM,0)) == -1 )
            throw std::runtime_error("Failed to create socket.");

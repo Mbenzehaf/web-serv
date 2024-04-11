@@ -279,7 +279,10 @@ void GlobalConfig::setServers(const std::vector<std::string>& arr)
         setconfig(arr);
     }else
     {
-        servers[currentLocation].setconfig(arr);
+        if(currentLocation.empty())
+            servers[currentServer].setconfig(arr);
+        else
+            servers[currentServer].locations[currentLocation].setlocation(arr);
     }
 }
 void GlobalConfig::setconfig(const std::vector<std::string> &arr)
@@ -289,7 +292,7 @@ void GlobalConfig::setconfig(const std::vector<std::string> &arr)
     std::vector<std::string>::const_iterator last = arr.end();
     if( (it = config.find(arr[0])) != config.end())
     {
-           it->second.insert(it->second.end(),first,last);
+        it->second.insert(it->second.end(),first,last);
     }else
     {
         config[arr[0]].assign(first,last);
@@ -308,41 +311,43 @@ void GlobalConfig::getconfig()
     std::map <std::string,  std::vector<std::string> >::iterator it;
     std::map < std::string, serverConfig > ::iterator it_server;
     std::map < std::string, locationConfig > ::iterator it_location;
-   
-    for(it_server = servers.begin() ; it_server != servers.end(); it_server++)
+    std::map <std::string,  std::vector<std::string> >::iterator it_config;
+    if(!config.empty())
     {
-        std::cout << "server : " << it_server->first << std::endl;
-        it_server->second.getconfig();
-        if(!it_server->second.locations.empty())
-        {
-            it_server->second.getconfig();
-        }
+        std::cout << "Global Configuration" << std::endl;
+    }
+    for(it_config = config.begin(); it_config != config.end();it_config++)
+    {
+        std::cout << it_config->first << " ";
+         afficher(it_config->second);
+    }
+    for(it_server = servers.begin(); it_server != servers.end();it_server++)
+    {
+        std::cout << it_server->first << std::endl;
     }
 }
 
-void serverConfig::getconfig()
-{
-    std::map <std::string,  std::vector<std::string> >::iterator it;
+// void serverConfig::getconfig()
+// {
+//     std::map <std::string,  std::vector<std::string> >::iterator it;
     
-    for(it = config.begin();it != config.end();it++)
-    {
-        std::cout << it->first << " = ";
-        afficher(it->second);
-    }
-    
-}
+//     for(it = config.begin();it != config.end();it++)
+//     {
+//         std::cout << it->first << " = ";
+//         afficher(it->second);
+//     }
+// }
 
-void locationConfig::getconfig()
-{
-    std::map <std::string,  std::vector<std::string> >::iterator it;
-    std::cout << ">>>"<< it->first << std::endl;
-    for(it = config.begin();it != config.end();it++)
-    {
-        std::cout << it->first << " =";
-        afficher(it->second);
-    }
-    
-}
+// void locationConfig::getconfig()
+// {
+//     std::map <std::string,  std::vector<std::string> >::iterator it;
+//     std::cout << ">>>"<< it->first << std::endl;
+//     for(it = config.begin();it != config.end();it++)
+//     {
+//         std::cout << it->first << " =";
+//         afficher(it->second);
+//     }
+// }
 
 void locationConfig::setlocation(const std::vector<std::string> & arr)
 {
@@ -357,6 +362,7 @@ void locationConfig::setlocation(const std::vector<std::string> & arr)
         config[arr[0]].assign(first,last);
     }
 }
+
 void serverConfig::setconfig(const std::vector<std::string> &arr)
 {
     std::map < std::string, std::vector<std::string> >::iterator it;

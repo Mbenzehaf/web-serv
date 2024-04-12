@@ -23,32 +23,48 @@
 
 Keywords::Keywords()
 {
-    gkeywords.insert("log_level");
-    gkeywords.insert("log_file");
-    gkeywords.insert("error_log");
+    gkeywords["log_level"];
+    gkeywords["log_file"];
+    gkeywords["error_log"];
+
+    //keyspath.insert("log_level");
+    keyspath.insert("log_file");
+    keyspath.insert("error_log");
+    keyspath.insert("root");
+    keyspath.insert("alias");
+    keyspath.insert("default_page");
+    keyspath.insert("include");
+    keyspath.insert("error_page");
+    keyspath.insert("access_log");
+
     //keywords = gkeywords;
     //key.insert("server");
-    keywords.insert("server_name");
+    keywords["server_name"];
     
-    keywords.insert("port");
+    keywords["port"];
     //keywords.insert("listen");
     
     //keywords.insert("path");
-    keywords.insert("root");
-    keywords.insert("alias");
+    keywords["root"];
+    keywords["alias"];
     
     //keywords.insert("alias");
-    keywords.insert("default_page");
+    keywords["default_page"];
     //key.insert("location");
-    keywords.insert("proxy_pass");
-    keywords.insert("include");
-    keywords.insert("autoindex");
-    keywords.insert("error_page");
-    keywords.insert("access_log");
+    keywords["proxy_pass"];
+    keywords["include"];
+    keywords["autoindex"].push_back("on");
+    keywords["autoindex"].push_back("off");
+    keywords["cgi"] = keywords["autoindex"];
+    keywords["error_page"];
+    keywords["access_log"];
+    keywords["allowed_methods"].push_back("GET");
+    keywords["allowed_methods"].push_back("POST");
+    keywords["allowed_methods"].push_back("DELETE");
+
     //default_type application/octet-strem;
     //include /etc/nginx/mime.types;
     //index
-    //allowed_methods
     //autoindex
     //redirect
 }
@@ -165,7 +181,6 @@ bool isDir(const std::string &path)
     struct stat info;
     if(stat(path.c_str(),&info) != 0)
     {
-        std::cout << ">>" << info.st_mode << std::endl;
         return (false);
     }
     return (false);
@@ -210,19 +225,23 @@ bool checkBracket(const std::string &line)
 bool GlobalConfig::checkkeywords(const std::vector<std::string>& arr)
 {
     std::vector<std::string>::const_iterator it = arr.begin();
-    
-    if((currentServer.empty() && gkeywords.find(*it) == gkeywords.end()) 
-    || (!currentServer.empty() && keywords.find(*it) == keywords.end()))
+    std::set<std::string> key;
+
+    if(((*it == "port" && allOf(*(it + 1),isdigit)) || keyspath.find(*it) != keyspath.end())&& arr.size()== 2)
     {
-        return (false);
+        return (true);
+    }else if (((*it == "autoindex" || *it == "cgi") &&  arr.size() == 2)  || *it == "allowed_methods")
+    {
+        for(size_t i = 1 ; i < arr.size();i++)
+        {
+            if(std::find(keywords[arr[0]].begin(),keywords[arr[0]].end(),arr[i]) == keywords[arr[0]].end())
+            {
+                return (false);
+            }
+        }
+        return (true);
     }
-    // else if(((*it != "index" || *it != "" ) && arr.size() > 2) 
-    // || (*it == "port" && !allOf(*(it + 1),isdigit)) || (*it == "root" && !isValidPath(*(it + 1))))
-    // {
-    //      std::cout <<"<<<<"<< *(it+1)<< ">>>"<< std::endl;
-    //     return (false);
-    // }
-    return (true);
+    return (false);
     //(currentServer.empty() && gkeywords.find(arr.at(1)) == gkeywords.end()) || keywords.find(arr.at(0)) == keywords.end()
 }
 
@@ -243,21 +262,22 @@ GlobalConfig::GlobalConfig(const char *fileName): Keywords()
         {
             arr = trim(line.substr(left + 1,right-left-1),' ');
             if(arr.size() != 2)
-                throw std::runtime_error(INVALIDCONFIG);
-            if(arr[0] == "server" && isIpAdresse(arr[1]))
+                throw std::runtime_error("GLOBAL");
+            if(arr[0] == "server" && isIpAdresse(arr[1]) && servers.find(arr.at(1)) == servers.end())
             {
                 currentServer = arr.at(1);
                 currentLocation.clear();
             }
-            else if(arr[0] == "location" && isValidPath(arr[1]) && !servers.empty())
+            else if(arr[0] == "location" && isValidPath(arr[1]) && !servers.empty() 
+            && servers[currentServer].locations.find(arr[1])!= servers[currentServer].locations.end())
             {
                 currentLocation = arr[1];
             }else
-                throw std::runtime_error(INVALIDCONFIG);
+                throw std::runtime_error("GLOBAL");
         }else if(std::count(line.begin(),line.end(),'=') == 1)
         {
             arr = trim(trim(line , '='),' ');
-            if(arr.empty() || arr.size() < 2 || !checkkeywords(arr))
+            if(arr.empty() || arr.size() < 2 /*|| !checkkeywords(arr)*/)
                 throw std::runtime_error(line);
             setServers(arr);
             // else if(currentServer.empty())
@@ -272,9 +292,17 @@ GlobalConfig::GlobalConfig(const char *fileName): Keywords()
     configFile.close();
 }
 
+// if((currentServer.empty() && gkeywords.find(*it) == gkeywords.end()) 
+//     || (!currentServer.empty() && keywords.find(*it) == keywords.end()))
+//     {
+//         return (false);
+//     }
 void GlobalConfig::setServers(const std::vector<std::string>& arr)
 {
-    if(currentServer.empty())
+    if(gkeywords.find(arr[0]) == gkeywords.end() && keywords.find(arr[0]) == keywords.end())
+    {
+        throw std::runtime_error("SERVER");
+    }else if(currentServer.empty())
     {
         setconfig(arr);
     }else
@@ -290,7 +318,12 @@ void GlobalConfig::setconfig(const std::vector<std::string> &arr)
     std::map < std::string, std::vector<std::string> >::iterator it;
     std::vector<std::string>::const_iterator first = arr.begin()+1;
     std::vector<std::string>::const_iterator last = arr.end();
-    if( (it = config.find(arr[0])) != config.end())
+    if((gkeywords.find(arr[0]) == gkeywords.end() && checkkeywords(arr))
+    || config.find(arr[0]) != config.end())
+    {
+        throw std::runtime_error(INVALIDCONFIG);
+    }
+    else if( (it = config.find(arr[0])) != config.end())
     {
         it->second.insert(it->second.end(),first,last);
     }else
@@ -314,40 +347,53 @@ void GlobalConfig::getconfig()
     std::map <std::string,  std::vector<std::string> >::iterator it_config;
     if(!config.empty())
     {
-        std::cout << "Global Configuration" << std::endl;
+        std::cout << "# Global Configuration" << std::endl;
     }
     for(it_config = config.begin(); it_config != config.end();it_config++)
     {
         std::cout << it_config->first << " ";
          afficher(it_config->second);
     }
-    for(it_server = servers.begin(); it_server != servers.end();it_server++)
+    if(!servers.empty())
     {
-        std::cout << it_server->first << std::endl;
+        std::cout << "# Server Configurations" << std::endl;
+        
+        for(it_server = servers.begin() ; it_server != servers.end() ; it_server++)
+        {
+            std::cout << "server :" << it_server->first << std::endl;
+            it_server->second.getconfig();
+            if(!it_server->second.locations.empty())
+            {
+                for(it_location = it_server->second.locations.begin() ; it_location != it_server->second.locations.end() ; it_location++)
+                {
+                    std::cout << "Location : " << it_location->first << std::endl;
+                    it_location->second.getconfig();
+                }
+            }
+        }
     }
 }
 
-// void serverConfig::getconfig()
-// {
-//     std::map <std::string,  std::vector<std::string> >::iterator it;
+void serverConfig::getconfig()
+{
+    std::map <std::string,  std::vector<std::string> >::iterator it;
     
-//     for(it = config.begin();it != config.end();it++)
-//     {
-//         std::cout << it->first << " = ";
-//         afficher(it->second);
-//     }
-// }
+    for(it = config.begin();it != config.end();it++)
+    {
+        std::cout << it->first << " = ";
+        afficher(it->second);
+    }
+}
 
-// void locationConfig::getconfig()
-// {
-//     std::map <std::string,  std::vector<std::string> >::iterator it;
-//     std::cout << ">>>"<< it->first << std::endl;
-//     for(it = config.begin();it != config.end();it++)
-//     {
-//         std::cout << it->first << " =";
-//         afficher(it->second);
-//     }
-// }
+void locationConfig::getconfig()
+{
+    std::map <std::string,  std::vector<std::string> >::iterator it;
+    for(it = config.begin();it != config.end();it++)
+    {
+        std::cout << it->first << " =";
+        afficher(it->second);
+    }
+}
 
 void locationConfig::setlocation(const std::vector<std::string> & arr)
 {
@@ -356,7 +402,10 @@ void locationConfig::setlocation(const std::vector<std::string> & arr)
     std::vector<std::string>::const_iterator last = arr.end();
    if( (it = config.find(arr[0])) != config.end())
     {
+        if(it->first == "port")
            it->second.insert(it->second.end(),first,last);
+        else
+            throw std::runtime_error("setlocation");
     }else
     {
         config[arr[0]].assign(first,last);

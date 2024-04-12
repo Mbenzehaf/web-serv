@@ -37,23 +37,25 @@
 class Keywords
 {
     protected:
-    std::set<std::string> keywords,gkeywords;
+    std::map<std::string,std::vector<std::string> > keywords,gkeywords;
+    std::set<std::string> keyspath;
     public:
     Keywords();
-}; 
+};
 
 class locationConfig {
     public :
         std::map < std::string, std::vector<std::string> > config;
         void setlocation(const std::vector<std::string> &);
-        std::map<std::string ,  std::vector<std::string> >& getlocations();
+        void getconfig();
+        //std::map<std::string ,  std::vector<std::string> >& getlocations();
 };
 
 class serverConfig {
     public :
         std::map < std::string, std::vector<std::string> > config;
         std::map < std::string, locationConfig > locations;
-        //void getconfig();
+        void getconfig();
         void setconfig(const std::vector<std::string> &arr);
 };
 

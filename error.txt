@@ -1,2 +1,48 @@
 duplicate : root location listen(the same port and in another server) 
 port : default (80)
+
+global :
+
+log_file
+error_log global oky
+default_type
+root
+index
+server_name
+listen
+alias
+default_page
+proxy_pass
+include
+autoindex
+cgi
+error_page
+access_log
+allowed_methods
+
+
+error_log
+access_log
+default_type
+include
+
+
+listen
+server_name
+root
+index
+location
+try_files
+error_page
+proxy_pass
+fastcgi_pass
+access_log
+error_log
+
+
+proxy_pass
+fastcgi_pass
+root
+alias
+access_log
+error_log

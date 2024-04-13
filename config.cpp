@@ -20,47 +20,95 @@
 //     }
 //     return (true);
 // }
-
+void setconfig(std::map<std::string,std::vector<std::string> > &map ,const std::vector<std::string> &arr)
+{
+    std::vector<std::string>::const_iterator it;
+    for(it = arr.begin() ; it != arr.end() ; it++)
+    {
+        map[*it];
+    }
+}
 Keywords::Keywords()
 {
-    gkeywords["log_level"];
-    gkeywords["log_file"];
-    gkeywords["error_log"];
+    _GlobalConfig["autoindex"].push_back("on");
+    _GlobalConfig["autoindex"].push_back("off");
+    _GlobalConfig["cgi"] = _GlobalConfig["autoindex"];
+    _GlobalConfig["allowed_methods"].push_back("GET");
+    _GlobalConfig["allowed_methods"].push_back("POST");
+    _GlobalConfig["allowed_methods"].push_back("DELETE");
+
+    _locationConfig = _serverConfig = _GlobalConfig;
+
+    _GlobalConfig["error_log"];
+    _GlobalConfig["log_level"];
+    _GlobalConfig["log_file"];
+    _GlobalConfig["access_log"];
+    _GlobalConfig["default_type"];
+    _GlobalConfig["include"];
+    _GlobalConfig["index"];
+
+    _serverConfig["listen"];
+    _serverConfig["server_name"];
+    _serverConfig["root"];
+    _serverConfig["index"];
+    _serverConfig["error_page"];
+    _serverConfig["proxy_pass"];
+    _serverConfig["access_log"];
+    _serverConfig["error_log"];
+
+    _locationConfig["root"];
+    _locationConfig["alias"];
+    _serverConfig["index"];
+    _locationConfig["access_log"];
+    _locationConfig["error_log"];
+    _locationConfig["proxy_pass"];
+    //gkeywords.insert(_GlobalConfig.begin(),_GlobalConfig.end());
+
+    // gkeywords["log_level"];
+    // gkeywords["log_file"];
+    // gkeywords["error_log"];
+    // gkeywords["default_type"];
+    // gkeywords["root"];
+    // gkeywords["index"];
+
 
     //keyspath.insert("log_level");
     keyspath.insert("log_file");
     keyspath.insert("error_log");
     keyspath.insert("root");
+    keyspath.insert("index");
     keyspath.insert("alias");
     keyspath.insert("default_page");
     keyspath.insert("include");
     keyspath.insert("error_page");
     keyspath.insert("access_log");
+    keyspath.insert("server_name");
 
     //keywords = gkeywords;
     //key.insert("server");
-    keywords["server_name"];
+    //keywords["server_name"];
     
-    keywords["port"];
+    //keywords["listen"];
     //keywords.insert("listen");
     
     //keywords.insert("path");
-    keywords["root"];
-    keywords["alias"];
+    //keywords["root"];
+    //keywords["root"];
+    //keywords["alias"];
     
     //keywords.insert("alias");
-    keywords["default_page"];
+    //keywords["default_page"];
     //key.insert("location");
-    keywords["proxy_pass"];
-    keywords["include"];
-    keywords["autoindex"].push_back("on");
-    keywords["autoindex"].push_back("off");
-    keywords["cgi"] = keywords["autoindex"];
-    keywords["error_page"];
-    keywords["access_log"];
-    keywords["allowed_methods"].push_back("GET");
-    keywords["allowed_methods"].push_back("POST");
-    keywords["allowed_methods"].push_back("DELETE");
+    // keywords["proxy_pass"];
+    // keywords["include"];
+    // keywords["autoindex"].push_back("on");
+    // keywords["autoindex"].push_back("off");
+    // keywords["cgi"] = keywords["autoindex"];
+    // keywords["error_page"];
+    // keywords["access_log"];
+    // keywords["allowed_methods"].push_back("GET");
+    // keywords["allowed_methods"].push_back("POST");
+    // keywords["allowed_methods"].push_back("DELETE");
 
     //default_type application/octet-strem;
     //include /etc/nginx/mime.types;
@@ -68,6 +116,7 @@ Keywords::Keywords()
     //autoindex
     //redirect
 }
+
 bool allOf(const std::string& str ,int(*fun)(int c)=isspace)
 {
     for(size_t i = 0 ; i < str.length();i++)
@@ -222,23 +271,28 @@ bool checkBracket(const std::string &line)
         }
     return (true);
 }
+
 bool GlobalConfig::checkkeywords(const std::vector<std::string>& arr)
 {
     std::vector<std::string>::const_iterator it = arr.begin();
     std::set<std::string> key;
 
-    if(((*it == "port" && allOf(*(it + 1),isdigit)) || keyspath.find(*it) != keyspath.end())&& arr.size()== 2)
+    if(((*it == "listen" && allOf(*(it + 1),isdigit)) || keyspath.find(*it) != keyspath.end())&& arr.size() == 2)
     {
         return (true);
-    }else if (((*it == "autoindex" || *it == "cgi") &&  arr.size() == 2)  || *it == "allowed_methods")
+    }else if (((*it == "autoindex" || *it == "cgi") &&  arr.size() == 2)  || (*it == "allowed_methods" && arr.size() <= 4))
     {
+        std::cout << " >> " << *it << std::endl;
         for(size_t i = 1 ; i < arr.size();i++)
         {
-            if(std::find(keywords[arr[0]].begin(),keywords[arr[0]].end(),arr[i]) == keywords[arr[0]].end())
+            if((std::find(_serverConfig[arr[0]].begin(),_serverConfig[arr[0]].end(),arr[i]) == _serverConfig[arr[0]].end()) || std::find(arr.begin(),arr.end(),arr[i]) != (arr.begin() + i))
             {
                 return (false);
             }
         }
+        return (true);
+    }else if (keyspath.find(*it) != keyspath.end() && allOf(arr.begin() + 1, arr.end(),isValidPath))
+    {
         return (true);
     }
     return (false);
@@ -269,27 +323,26 @@ GlobalConfig::GlobalConfig(const char *fileName): Keywords()
                 currentLocation.clear();
             }
             else if(arr[0] == "location" && isValidPath(arr[1]) && !servers.empty() 
-            && servers[currentServer].locations.find(arr[1])!= servers[currentServer].locations.end())
+            && servers[currentServer].locations.find(arr[1]) == servers[currentServer].locations.end())
             {
                 currentLocation = arr[1];
             }else
-                throw std::runtime_error("GLOBAL");
+               {
+                std::cout << line << std::endl;
+                throw std::runtime_error("GLOBAL1");
+               }
         }else if(std::count(line.begin(),line.end(),'=') == 1)
         {
             arr = trim(trim(line , '='),' ');
             if(arr.empty() || arr.size() < 2 /*|| !checkkeywords(arr)*/)
                 throw std::runtime_error(line);
             setServers(arr);
-            // else if(currentServer.empty())
-            //     config[arr[0]].assign(arr.begin()+1,arr.end());
-            // else if(currentLocation.empty())
-            //     servers[currentServer].setconfig(arr); 
-            // else
-            //     servers[currentServer].locations[currentLocation].setlocation(arr);
         }else
             throw std::runtime_error(INVALIDCONFIG);
     }
     configFile.close();
+    if(config.empty() && servers.empty())
+        throw std::runtime_error(INVALIDCONFIG);
 }
 
 // if((currentServer.empty() && gkeywords.find(*it) == gkeywords.end()) 
@@ -299,28 +352,41 @@ GlobalConfig::GlobalConfig(const char *fileName): Keywords()
 //     }
 void GlobalConfig::setServers(const std::vector<std::string>& arr)
 {
-    if(gkeywords.find(arr[0]) == gkeywords.end() && keywords.find(arr[0]) == keywords.end())
-    {
-        throw std::runtime_error("SERVER");
-    }else if(currentServer.empty())
+    // if(_GlobalConfig.find(arr[0]) == _GlobalConfig.end() && _serverConfig.find(arr[0]) == _serverConfig.end())
+    // {
+    //     throw std::runtime_error("SERVER");
+    // }else
+    if(currentServer.empty())
     {
         setconfig(arr);
     }else
     {
-        if(currentLocation.empty())
-            servers[currentServer].setconfig(arr);
-        else
+        if(!checkkeywords(arr))
+            throw std::runtime_error(arr[0]);
+        else if(currentLocation.empty())
+            {
+                if(_serverConfig.find(arr[0]) == _serverConfig.end())
+                   throw std::runtime_error(INVALIDCONFIG);
+                servers[currentServer].setconfig(arr);
+            }
+        else{
+             if(_locationConfig.find(arr[0]) == _locationConfig.end())
+                throw std::runtime_error(INVALIDCONFIG);
             servers[currentServer].locations[currentLocation].setlocation(arr);
+            }
     }
 }
+
 void GlobalConfig::setconfig(const std::vector<std::string> &arr)
 {
     std::map < std::string, std::vector<std::string> >::iterator it;
     std::vector<std::string>::const_iterator first = arr.begin()+1;
     std::vector<std::string>::const_iterator last = arr.end();
-    if((gkeywords.find(arr[0]) == gkeywords.end() && checkkeywords(arr))
+    std::cout << " >> " << arr[0] << " >>" << (_GlobalConfig.find(arr[0]) == _GlobalConfig.end()) << std::endl;
+    if((_GlobalConfig.find(arr[0]) == _GlobalConfig.end() && checkkeywords(arr))
     || config.find(arr[0]) != config.end())
     {
+        std::cout << arr[0] << std::endl;
         throw std::runtime_error(INVALIDCONFIG);
     }
     else if( (it = config.find(arr[0])) != config.end())
@@ -331,6 +397,7 @@ void GlobalConfig::setconfig(const std::vector<std::string> &arr)
         config[arr[0]].assign(first,last);
     }
 }
+
 void afficher(const std::vector<std::string> &arr)
 {
     for(size_t i = 0;i < arr.size();i++)
@@ -339,6 +406,7 @@ void afficher(const std::vector<std::string> &arr)
     }
     std::cout << std::endl;
 }
+
 void GlobalConfig::getconfig()
 {
     std::map <std::string,  std::vector<std::string> >::iterator it;
@@ -402,7 +470,7 @@ void locationConfig::setlocation(const std::vector<std::string> & arr)
     std::vector<std::string>::const_iterator last = arr.end();
    if( (it = config.find(arr[0])) != config.end())
     {
-        if(it->first == "port")
+        if(std::find(it->second.begin(),it->second.end(),arr[1]) == it->second.end())
            it->second.insert(it->second.end(),first,last);
         else
             throw std::runtime_error("setlocation");
@@ -419,7 +487,11 @@ void serverConfig::setconfig(const std::vector<std::string> &arr)
     std::vector<std::string>::const_iterator last = arr.end();
     if( (it = config.find(arr[0])) != config.end())
     {
-           it->second.insert(it->second.end(),first,last);
+        if(std::find(it->second.begin(),it->second.end(),arr[1]) == it->second.end())
+        {
+            it->second.insert(it->second.end(),first,last);
+        }else
+            throw std::runtime_error(INVALIDCONFIG);
     }else
     {
         config[arr[0]].assign(first,last);

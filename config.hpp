@@ -37,9 +37,13 @@
 class Keywords
 {
     protected:
-    std::map<std::string,std::vector<std::string> > keywords,gkeywords;
+    //std::map<std::string,std::vector<std::string> > keywords,gkeywords;
+    std::map<std::string , std::vector<std::string> > _GlobalConfig ;
+    std::map<std::string , std::vector<std::string> > _serverConfig ;
+    std::map<std::string , std::vector<std::string> > _locationConfig ;
     std::set<std::string> keyspath;
     public:
+    void setkeywords();
     Keywords();
 };
 
@@ -75,5 +79,18 @@ class GlobalConfig:protected Keywords{
         void getconfig();
         GlobalConfig(const char *);
 };
+
+template<typename Iterator, typename T2>
+bool allOf(Iterator first,Iterator last,T2 fun)
+{
+    for (Iterator it = first;it != last ; it++)
+    {
+        if(!fun(*it))
+        {
+            return (false);
+        }
+    }
+    return (true);
+}
 
 #endif

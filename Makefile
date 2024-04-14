@@ -10,8 +10,8 @@
 #                                                                              #
 # **************************************************************************** #
 
-NAME1 = Client
-NAME2 = Server
+#NAME1 = Client
+NAME = Server
 
 CXX = c++
 
@@ -19,24 +19,19 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 #-fsanitize=address -g3
 
-SRCS1 = client.cpp
-SRCS2 = server.cpp config.cpp
+SRCS = server.cpp config.cpp
 
-OBJS1 = ${SRCS1:.cpp=.o}
-OBJS2 = ${SRCS2:.cpp=.o}
+OBJS = ${SRCS:.cpp=.o}
 
-all : ${NAME1} ${NAME2}
+all : ${NAME} 
 
-${NAME1} : ${OBJS1}
-	${CXX} ${OBJS1} ${CXXFLAGS} -o ${NAME1}
-
-${NAME2} : ${OBJS2}
-	${CXX} ${OBJS2} ${CXXFLAGS} -o ${NAME2}
+${NAME} : ${OBJS}
+	${CXX} ${OBJS} ${CXXFLAGS} -o ${NAME}
 
 clean : 
-	rm -rf ${OBJS1} ${OBJS2} 
+	rm -rf ${OBJS}
 
 fclean : clean
-	rm -rf ${NAME1} ${NAME2}
+	rm -rf ${NAME}
 
 re : fclean all

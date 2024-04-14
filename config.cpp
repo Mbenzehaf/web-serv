@@ -45,6 +45,8 @@ Keywords::Keywords()
     _GlobalConfig["access_log"];
     _GlobalConfig["default_type"];
     _GlobalConfig["include"];
+    _GlobalConfig["redirect"];
+    _GlobalConfig["error_page"];
     _GlobalConfig["index"];
 
     _serverConfig["listen"];
@@ -52,6 +54,7 @@ Keywords::Keywords()
     _serverConfig["root"];
     _serverConfig["index"];
     _serverConfig["error_page"];
+    _serverConfig["redirect"];
     _serverConfig["proxy_pass"];
     _serverConfig["access_log"];
     _serverConfig["error_log"];
@@ -59,6 +62,7 @@ Keywords::Keywords()
     _locationConfig["root"];
     _locationConfig["alias"];
     _serverConfig["index"];
+     _serverConfig["redirect"];
     _locationConfig["access_log"];
     _locationConfig["error_log"];
     _locationConfig["proxy_pass"];
@@ -80,9 +84,9 @@ Keywords::Keywords()
     keyspath.insert("alias");
     keyspath.insert("default_page");
     keyspath.insert("include");
-    keyspath.insert("error_page");
+   // keyspath.insert("error_page");
     keyspath.insert("access_log");
-    keyspath.insert("server_name");
+    //keyspath.insert("server_name");
 
     //keywords = gkeywords;
     //key.insert("server");
@@ -271,18 +275,41 @@ bool checkBracket(const std::string &line)
         }
     return (true);
 }
-
-bool GlobalConfig::checkkeywords(const std::vector<std::string>& arr)
+bool check(const std::vector<std::string>& arr,std::map<std::string,std::vector<std::string> > &map)
 {
+    for(size_t i = 1 ; i < arr.size();i++)
+        {
+            if((std::find(map[arr[0]].begin(),map[arr[0]].end(),arr.at(i)) == map[arr[0]].end()) 
+            || std::find(arr.begin() + 1,arr.end(),arr.at(i)) != (arr.begin() + i))
+                return (false);
+        }
+    return (true);
+}
+bool checkkeywords(const std::vector<std::string>& arr,std::map<std::string,std::vector<std::string> >& map)
+{
+    Keywords key;
     std::vector<std::string>::const_iterator it = arr.begin();
-    std::set<std::string> key;
-
-    if(((*it == "listen" && allOf(*(it + 1),isdigit)) || keyspath.find(*it) != keyspath.end())&& arr.size() == 2)
+    std::cout << arr[0] << std::endl;
+    if(map.find(arr.at(0)) == map.end() || (*it == "listen" && !allOf(*(it + 1), isdigit))
+    || (*it != "allowed_methods" && *it != "error_page" && *it != "index" && *it != "redirect" && arr.size() != 2) )
+    {
+        return (false);
+    }else if(((*it == "autoindex" || *it == "cgi" )&& (arr.size() != 2 || !check(arr,map)))
+    || (*it == "allowed_methods" && (arr.size() > 4 || !check(arr,map))))
+    {
+        return (false);
+    }
+    else if(((*it == "error_page" || *it == "redirect") && (!allOf(*(it + 1), isdigit) || arr.size() != 3  || !isValidPath(arr.at(2))))
+    || (key.keyspath.find(arr[0]) != key.keyspath.end() && !isValidPath(arr.at(1))))
+    {
+        return (false);
+    }
+    return (true);
+   /* if(((*it == "listen" && allOf(*(it + 1),isdigit)) || keyspath.find(*it) != keyspath.end())&& arr.size() == 2)
     {
         return (true);
     }else if (((*it == "autoindex" || *it == "cgi") &&  arr.size() == 2)  || (*it == "allowed_methods" && arr.size() <= 4))
     {
-        std::cout << " >> " << *it << std::endl;
         for(size_t i = 1 ; i < arr.size();i++)
         {
             if((std::find(_serverConfig[arr[0]].begin(),_serverConfig[arr[0]].end(),arr[i]) == _serverConfig[arr[0]].end()) || std::find(arr.begin(),arr.end(),arr[i]) != (arr.begin() + i))
@@ -295,7 +322,7 @@ bool GlobalConfig::checkkeywords(const std::vector<std::string>& arr)
     {
         return (true);
     }
-    return (false);
+    return (false);*/
     //(currentServer.empty() && gkeywords.find(arr.at(1)) == gkeywords.end()) || keywords.find(arr.at(0)) == keywords.end()
 }
 
@@ -316,7 +343,7 @@ GlobalConfig::GlobalConfig(const char *fileName): Keywords()
         {
             arr = trim(line.substr(left + 1,right-left-1),' ');
             if(arr.size() != 2)
-                throw std::runtime_error("GLOBAL");
+                throw std::runtime_error(INVALIDCONFIG);
             if(arr[0] == "server" && isIpAdresse(arr[1]) && servers.find(arr.at(1)) == servers.end())
             {
                 currentServer = arr.at(1);
@@ -329,13 +356,13 @@ GlobalConfig::GlobalConfig(const char *fileName): Keywords()
             }else
                {
                 std::cout << line << std::endl;
-                throw std::runtime_error("GLOBAL1");
+                throw std::runtime_error(INVALIDCONFIG);
                }
         }else if(std::count(line.begin(),line.end(),'=') == 1)
         {
             arr = trim(trim(line , '='),' ');
             if(arr.empty() || arr.size() < 2 /*|| !checkkeywords(arr)*/)
-                throw std::runtime_error(line);
+                throw std::runtime_error(INVALIDCONFIG);
             setServers(arr);
         }else
             throw std::runtime_error(INVALIDCONFIG);
@@ -356,21 +383,22 @@ void GlobalConfig::setServers(const std::vector<std::string>& arr)
     // {
     //     throw std::runtime_error("SERVER");
     // }else
+
     if(currentServer.empty())
     {
+        if(_GlobalConfig.find(arr[0]) == _GlobalConfig.end() || !checkkeywords(arr,_GlobalConfig))
+                   throw std::runtime_error(INVALIDCONFIG);
         setconfig(arr);
     }else
     {
-        if(!checkkeywords(arr))
-            throw std::runtime_error(arr[0]);
-        else if(currentLocation.empty())
+        if(currentLocation.empty())
             {
-                if(_serverConfig.find(arr[0]) == _serverConfig.end())
+                if(_serverConfig.find(arr[0]) == _serverConfig.end() || !checkkeywords(arr,_serverConfig))
                    throw std::runtime_error(INVALIDCONFIG);
                 servers[currentServer].setconfig(arr);
             }
         else{
-             if(_locationConfig.find(arr[0]) == _locationConfig.end())
+             if(_locationConfig.find(arr[0]) == _locationConfig.end() || !checkkeywords(arr,_locationConfig))
                 throw std::runtime_error(INVALIDCONFIG);
             servers[currentServer].locations[currentLocation].setlocation(arr);
             }
@@ -380,22 +408,48 @@ void GlobalConfig::setServers(const std::vector<std::string>& arr)
 void GlobalConfig::setconfig(const std::vector<std::string> &arr)
 {
     std::map < std::string, std::vector<std::string> >::iterator it;
-    std::vector<std::string>::const_iterator first = arr.begin()+1;
+    std::vector<std::string>::const_iterator first = arr.begin() + 1;
     std::vector<std::string>::const_iterator last = arr.end();
-    std::cout << " >> " << arr[0] << " >>" << (_GlobalConfig.find(arr[0]) == _GlobalConfig.end()) << std::endl;
-    if((_GlobalConfig.find(arr[0]) == _GlobalConfig.end() && checkkeywords(arr))
-    || config.find(arr[0]) != config.end())
-    {
-        std::cout << arr[0] << std::endl;
-        throw std::runtime_error(INVALIDCONFIG);
-    }
-    else if( (it = config.find(arr[0])) != config.end())
+   if( (it = config.find(arr[0])) != config.end())
     {
         it->second.insert(it->second.end(),first,last);
     }else
     {
         config[arr[0]].assign(first,last);
     }
+}
+void locationConfig::setlocation(const std::vector<std::string> &arr)
+{
+    std::map < std::string, std::vector<std::string> >::iterator it;
+    std::vector<std::string>::const_iterator first = arr.begin()+1;
+    std::vector<std::string>::const_iterator last = arr.end();
+    
+    if( (it = config.find(arr[0])) != config.end())
+    {
+        if(std::find(it->second.begin(),it->second.end(),arr[1]) == it->second.end())
+           it->second.insert(it->second.end(),first,last);
+        else
+            throw std::runtime_error("setlocation");
+    }else
+    {
+        config[arr[0]].assign(first,last);
+    }
+}
+
+void serverConfig::setconfig(const std::vector<std::string> &arr)
+{
+    std::map < std::string, std::vector<std::string> >::iterator it;
+    std::vector<std::string>::const_iterator first = arr.begin()+1;
+    std::vector<std::string>::const_iterator last = arr.end();
+
+    if( (it = config.find(arr[0])) != config.end())
+    {
+        if(std::find(it->second.begin(),it->second.end(),arr[1]) == it->second.end())
+            it->second.insert(it->second.end(),first,last);
+        else
+            throw std::runtime_error(INVALIDCONFIG);
+    }else
+        config[arr[0]].assign(first,last);
 }
 
 void afficher(const std::vector<std::string> &arr)
@@ -460,40 +514,5 @@ void locationConfig::getconfig()
     {
         std::cout << it->first << " =";
         afficher(it->second);
-    }
-}
-
-void locationConfig::setlocation(const std::vector<std::string> & arr)
-{
-    std::map < std::string, std::vector<std::string> >::iterator it;
-    std::vector<std::string>::const_iterator first = arr.begin()+1;
-    std::vector<std::string>::const_iterator last = arr.end();
-   if( (it = config.find(arr[0])) != config.end())
-    {
-        if(std::find(it->second.begin(),it->second.end(),arr[1]) == it->second.end())
-           it->second.insert(it->second.end(),first,last);
-        else
-            throw std::runtime_error("setlocation");
-    }else
-    {
-        config[arr[0]].assign(first,last);
-    }
-}
-
-void serverConfig::setconfig(const std::vector<std::string> &arr)
-{
-    std::map < std::string, std::vector<std::string> >::iterator it;
-    std::vector<std::string>::const_iterator first = arr.begin()+1;
-    std::vector<std::string>::const_iterator last = arr.end();
-    if( (it = config.find(arr[0])) != config.end())
-    {
-        if(std::find(it->second.begin(),it->second.end(),arr[1]) == it->second.end())
-        {
-            it->second.insert(it->second.end(),first,last);
-        }else
-            throw std::runtime_error(INVALIDCONFIG);
-    }else
-    {
-        config[arr[0]].assign(first,last);
     }
 }

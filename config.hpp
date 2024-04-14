@@ -41,8 +41,8 @@ class Keywords
     std::map<std::string , std::vector<std::string> > _GlobalConfig ;
     std::map<std::string , std::vector<std::string> > _serverConfig ;
     std::map<std::string , std::vector<std::string> > _locationConfig ;
-    std::set<std::string> keyspath;
     public:
+    std::set<std::string> keyspath;
     void setkeywords();
     Keywords();
 };
@@ -60,7 +60,7 @@ class serverConfig {
         std::map < std::string, std::vector<std::string> > config;
         std::map < std::string, locationConfig > locations;
         void getconfig();
-        void setconfig(const std::vector<std::string> &arr);
+        void setconfig(const std::vector<std::string> &);
 };
 
 class GlobalConfig:protected Keywords{
@@ -69,9 +69,6 @@ class GlobalConfig:protected Keywords{
         std::map < int, std::string > serverNames;
         std::string currentLocation;
         std::string currentServer;
-        
-    protected :
-        bool checkkeywords(const std::vector<std::string>& );
     public :
         std::map < std::string, serverConfig > servers;
         void setconfig(const std::vector<std::string> &);

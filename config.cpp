@@ -305,27 +305,29 @@ bool checkkeywords(const std::vector<std::string>& arr,std::map<std::string,std:
         return (false);
     }
     return (true);
-   /* if(((*it == "listen" && allOf(*(it + 1),isdigit)) || keyspath.find(*it) != keyspath.end())&& arr.size() == 2)
-    {
-        return (true);
-    }else if (((*it == "autoindex" || *it == "cgi") &&  arr.size() == 2)  || (*it == "allowed_methods" && arr.size() <= 4))
-    {
-        for(size_t i = 1 ; i < arr.size();i++)
-        {
-            if((std::find(_serverConfig[arr[0]].begin(),_serverConfig[arr[0]].end(),arr[i]) == _serverConfig[arr[0]].end()) || std::find(arr.begin(),arr.end(),arr[i]) != (arr.begin() + i))
-            {
-                return (false);
-            }
-        }
-        return (true);
-    }else if (keyspath.find(*it) != keyspath.end() && allOf(arr.begin() + 1, arr.end(),isValidPath))
-    {
-        return (true);
-    }
-    return (false);*/
-    //(currentServer.empty() && gkeywords.find(arr.at(1)) == gkeywords.end()) || keywords.find(arr.at(0)) == keywords.end()
 }
-
+void DefaultParameter( std::map < std::string, serverConfig > &map)
+{
+    std::vector<std::string> arr;
+    std::map < std::string, serverConfig >::iterator it;
+    arr.push_back("cgi");
+    arr.push_back("autoindex");
+    arr.push_back("listen");
+    
+    for(it = map.begin();it!= map.end();it++)
+    {
+    for(size_t i = 0 ; i < arr.size() ; i++)
+    {
+        if(it->second.config.find(arr[i]) == it->second.config.end())
+        {
+            if(arr[i] != "listen")
+                it->second.config[arr[i]].push_back("off");
+            else
+                it->second.config[arr[i]].push_back("80");
+        }
+    }
+    }
+}
 GlobalConfig::GlobalConfig(const char *fileName): Keywords()
 {
     size_t left,right;
@@ -361,7 +363,7 @@ GlobalConfig::GlobalConfig(const char *fileName): Keywords()
         }else if(std::count(line.begin(),line.end(),'=') == 1)
         {
             arr = trim(trim(line , '='),' ');
-            if(arr.empty() || arr.size() < 2 /*|| !checkkeywords(arr)*/)
+            if(arr.empty() || arr.size() < 2 )
                 throw std::runtime_error(INVALIDCONFIG);
             setServers(arr);
         }else
@@ -370,6 +372,7 @@ GlobalConfig::GlobalConfig(const char *fileName): Keywords()
     configFile.close();
     if(config.empty() && servers.empty())
         throw std::runtime_error(INVALIDCONFIG);
+    DefaultParameter(servers);
 }
 
 // if((currentServer.empty() && gkeywords.find(*it) == gkeywords.end()) 

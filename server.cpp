@@ -35,7 +35,7 @@ int main(int ac,char **av)
     int serverfd;
     //int epollFd;
     //sockaddr_in serverAdress;
-    
+    //std::map < std::string, serverConfig >::iterator ;
     serverfd = -1;
     //epollFd = -1;
     //(void)av;
@@ -44,31 +44,7 @@ int main(int ac,char **av)
         if(ac != 2)
            throw std::runtime_error("./webserv [configuration file]");
         GlobalConfig config(av[1]);
-        config.getconfig();
-        // std::map < std::string, serverConfig >::iterator it;
-        // for(it = config.servers.begin();it != config.servers.end();it++ )
-        // {
-        //     std::cout << it->first << std::endl;
-        // }
-       // std::map < std::string, serverConfig >::iterator servers;
-       /* if((serverfd = socket(AF_INET,SOCK_STREAM,0)) == -1 )
-           throw std::runtime_error("Failed to create socket.");
-        serverAdress.sin_family = AF_INET;
-        serverAdress.sin_port = htons(PORT);
-        serverAdress.sin_addr.s_addr = INADDR_ANY;
-        if(bind(serverfd,(sockaddr *)&serverAdress,(socklen_t)sizeof(serverAdress)) == -1)
-            throw std::runtime_error("Failed to bind socket.");
-        if(listen(serverfd,MAX_CLIENTS) == -1 )
-            throw std::runtime_error("Failed to listen.");
-        if((epollFd  = epoll_create1(0))== -1)
-            throw std::runtime_error("Failed to create epoll instance");
-        epoll_event serverEvents;
-        serverEvents.events = EPOLLIN;
-        serverEvents.data.fd = serverfd;
-        if(epoll_ctl(epollFd,EPOLL_CTL_ADD,serverfd,&serverEvents) == -1)
-            throw std::runtime_error("Failed to add server socket to epoll instance");
-        epoll_event events[MAX_CLIENTS];
-        std::vector<int> fd_clients;*/
+        
     }
     catch(const std::exception& e)
     {

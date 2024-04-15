@@ -289,7 +289,6 @@ bool checkkeywords(const std::vector<std::string>& arr,std::map<std::string,std:
 {
     Keywords key;
     std::vector<std::string>::const_iterator it = arr.begin();
-    std::cout << arr[0] << std::endl;
     if(map.find(arr.at(0)) == map.end() || (*it == "listen" && !allOf(*(it + 1), isdigit))
     || (*it != "allowed_methods" && *it != "error_page" && *it != "index" && *it != "redirect" && arr.size() != 2) )
     {
@@ -356,10 +355,7 @@ GlobalConfig::GlobalConfig(const char *fileName): Keywords()
             {
                 currentLocation = arr[1];
             }else
-               {
-                std::cout << line << std::endl;
                 throw std::runtime_error(INVALIDCONFIG);
-               }
         }else if(std::count(line.begin(),line.end(),'=') == 1)
         {
             arr = trim(trim(line , '='),' ');
